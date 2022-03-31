@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"log"
+	"time"
 )
 
 //map[string]func(*Node, []string)bool
@@ -57,6 +58,8 @@ func doCreate(n *Node, none []string) bool {
 		return false
 	}
 	n.Ring = true
+	fmt.Printf("Ring server created with IP: %s:%s", n.Address, n.Port)
+	go n.doStabilize()
 	return true
 }
 
@@ -64,22 +67,36 @@ func doJoin(n *Node, addr []string) bool {
 	if len(addr) != 1 || n.Ring {
 		return false
 	}
-	var s string
-	if err := call(addr[0], "Node.Join", fmt.Sprintf("%s:%s", n.Address,n.Port), &s); err != nil {
-		log.Printf("Join error: %v", err)
+	ringAddr := addr[0]
+	ownAddr := fmt.Sprintf("%s:%s", n.Address, n.Port)
+	res := find(ownAddr, ringAddr)
+	if len(res) == 0 {
 		return false
 	}
-	if s != "" {
-		n.Successor[0] = addr[0]
-		n.Predecessor = s
-		n.Ring = true
-		if err := n.create(); err != nil {
-			log.Printf("Creation error: %v", err)
-			return false
-		}
-		return true
+	fmt.Printf("Response: %v\n", res)
+	n.Successor = []string{res}
+	n.Ring = true
+	if err := n.create(); err != nil {
+		log.Printf("Creation error: %v", err)
+		return false
 	}
-	return false
+	var mip []map[string]string
+	if err := call(n.Successor[0], "Node.GetAll", fmt.Sprintf("%s:%s", n.Address, n.Port), &mip); err != nil {
+		log.Printf("Error getting store: %v", err)
+		return false
+	}
+	if len(mip) != 0 {
+		n.Store = mip[0]
+	}
+	go n.doStabilize()
+	return true
+}
+
+func (n *Node) doStabilize() {
+	for n.Ring {
+		n.stabilize()
+		time.Sleep(2 * time.Second)
+	}
 }
 
 func doGetIP(n *Node, none []string) bool {
@@ -89,6 +106,7 @@ func doGetIP(n *Node, none []string) bool {
 	fmt.Printf(getLocalAddress())
 	return true
 }
+
 
 func doPing(n *Node, addr []string) bool {
 	if len(addr) != 1 {
@@ -106,11 +124,12 @@ func doPing(n *Node, addr []string) bool {
 //-------------------------------------------------------
 
 func doPut(n *Node, args []string) bool {
-	if len(args) != 3 || !n.Ring {
+	if len(args) != 2 || !n.Ring {
 		return false
 	}
+	newNode := find(args[0], fmt.Sprintf("%s:%s", n.Address, n.Port))
 	var s string
-	if err := call(args[2], "Node.Put", args[:2], &s); err != nil {
+	if err := call(newNode, "Node.Put", args[:2], &s); err != nil {
 		log.Printf("Error with call: %v", err)
 		return false
 	}
@@ -124,11 +143,12 @@ func doPutRandom(n *Node, addr []string) bool {
 }
 
 func doGet(n *Node, args []string) bool {
-	if len(args) != 2 || !n.Ring {
+	if len(args) != 1 || !n.Ring {
 		return false
 	}
+	newNode := find(args[0], fmt.Sprintf("%s:%s", n.Address, n.Port))
 	var s string
-	if err := call(args[1], "Node.Get", args[0], &s); err != nil {
+	if err := call(newNode, "Node.Get", args[0], &s); err != nil {
 		log.Printf("Error with call: %v", err)
 		return false
 	}
@@ -137,11 +157,12 @@ func doGet(n *Node, args []string) bool {
 }
 
 func doDelete(n *Node, args []string) bool {
-	if len(args) != 2 || !n.Ring {
+	if len(args) != 1 || !n.Ring {
 		return false
 	}
+	newNode := find(args[0], fmt.Sprintf("%s:%s", n.Address, n.Port))
 	var s string
-	if err := call(args[1], "Node.Delete", args[0], &s); err != nil {
+	if err := call(newNode, "Node.Delete", args[0], &s); err != nil {
 		log.Printf("Error with call: %v", err)
 		return false
 	}
@@ -190,6 +211,13 @@ func doDumpAll(n *Node, none []string) bool {
 func doQuit(n *Node, none []string) bool {
 	if len(none) != 0 {
 		return false
+	}
+	if n.Ring {
+		var s string
+		if err := call(n.Successor[0], "Node.PutAll", n.Store, &s); err != nil {
+			log.Printf("Error with transferring store: %v", err)
+		}
+		fmt.Printf("%s\n", s)
 	}
 	os.Exit(0)
 	return true
