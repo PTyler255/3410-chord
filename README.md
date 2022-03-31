@@ -6,6 +6,7 @@ It is a funcitoning Peer 2 Peer program, just haven't gotten around to fixing up
 Is the screencast for part 1 of chord
 
 ##IOU Part 2 Screencast.mp4
+It's 3am for me so please be patient
 
 ##chord.go
 Main file that manages commands for chord program
