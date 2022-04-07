@@ -74,7 +74,7 @@ func find(id, start string) string {
 }
 
 func (n *Node) Ping(p string, reply *string) error {
-	fmt.Printf(p)
+	fmt.Printf("%s\n", p)
 	*reply = "Pong!"
 	return nil
 }
@@ -215,7 +215,8 @@ func (n *Node) Notify(np string, reply *[]string) error {
 	phash := hashstring(n.Predecessor)
 	nphash := hashstring(np)
 	nhash := hashstring(fmt.Sprintf("%s:%s", n.Address, n.Port))
-	if n.Predecessor == "" || between(phash, nphash, nhash, true) || n.Predecessor == n.Successor[0] {
+	//fmt.Printf("%s < %s < %s = %v\n", n.Predecessor, np, fmt.Sprintf("%s:%s", n.Address, n.Port), between(phash, nphash, nhash, true))
+	if n.Predecessor == "" || between(phash, nphash, nhash, true) || n.Predecessor == np {
 		n.Predecessor = np
 		*reply = n.Successor
 	}

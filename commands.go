@@ -94,6 +94,7 @@ func doJoin(n *Node, addr []string) bool {
 
 func (n *Node) doStabilize() {
 	for n.Ring {
+		n.check_predecessor()
 		n.stabilize()
 		time.Sleep(2 * time.Second)
 	}
@@ -182,7 +183,7 @@ func doDump(n *Node, none []string) bool {
 	}
 	fmt.Printf("\nAll Successors.")
 	for i, v := range n.Successor {
-		fmt.Printf("\n%d: %s", i, v)
+		fmt.Printf("\n%d: %s", i+1, v)
 	}
 	return true
 
