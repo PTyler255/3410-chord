@@ -20,6 +20,7 @@ func main() {
 	scan := bufio.NewScanner(os.Stdin)
 	node := new(Node)
 	node.Port = "3410"
+	node.Next = 0
 	node.SuccMax = 3
 	node.Address = getLocalAddress()
 	node.Store = make(map[string]string)

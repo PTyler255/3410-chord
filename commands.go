@@ -69,7 +69,7 @@ func doJoin(n *Node, addr []string) bool {
 	}
 	ringAddr := addr[0]
 	ownAddr := fmt.Sprintf("%s:%s", n.Address, n.Port)
-	res := find(ownAddr, ringAddr)
+	res := find(hashstring(ownAddr), ringAddr)
 	if len(res) == 0 {
 		return false
 	}
@@ -93,10 +93,18 @@ func doJoin(n *Node, addr []string) bool {
 }
 
 func (n *Node) doStabilize() {
+	go n.doFix()
 	for n.Ring {
 		n.check_predecessor()
 		n.stabilize()
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Second/2)
+	}
+}
+
+func (n *Node) doFix() {
+	for n.Ring {
+		n.fix_fingers()
+		time.Sleep(time.Second/10)
 	}
 }
 
@@ -128,7 +136,7 @@ func doPut(n *Node, args []string) bool {
 	if len(args) != 2 || !n.Ring {
 		return false
 	}
-	newNode := find(args[0], fmt.Sprintf("%s:%s", n.Address, n.Port))
+	newNode := find(hashstring(args[0]), fmt.Sprintf("%s:%s", n.Address, n.Port))
 	var s string
 	if err := call(newNode, "Node.Put", args[:2], &s); err != nil {
 		log.Printf("Error with call: %v", err)
@@ -147,7 +155,7 @@ func doGet(n *Node, args []string) bool {
 	if len(args) != 1 || !n.Ring {
 		return false
 	}
-	newNode := find(args[0], fmt.Sprintf("%s:%s", n.Address, n.Port))
+	newNode := find(hashstring(args[0]), fmt.Sprintf("%s:%s", n.Address, n.Port))
 	var s string
 	if err := call(newNode, "Node.Get", args[0], &s); err != nil {
 		log.Printf("Error with call: %v", err)
@@ -161,7 +169,7 @@ func doDelete(n *Node, args []string) bool {
 	if len(args) != 1 || !n.Ring {
 		return false
 	}
-	newNode := find(args[0], fmt.Sprintf("%s:%s", n.Address, n.Port))
+	newNode := find(hashstring(args[0]), fmt.Sprintf("%s:%s", n.Address, n.Port))
 	var s string
 	if err := call(newNode, "Node.Delete", args[0], &s); err != nil {
 		log.Printf("Error with call: %v", err)

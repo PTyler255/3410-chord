@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"log"
 	"fmt"
+	"math/big"
+	"math"
 )
 
 type Node struct{
@@ -18,6 +20,7 @@ type Node struct{
 	Predecessor string
 	Store map[string]string
 	Ring bool
+	Next int
 }
 
 
@@ -49,11 +52,11 @@ func (n *Node) create() error {
 	go http.Serve(l, nil)
 	return nil
 }
-
+/*
 func find(id, start string) string {
 	found, nextNode := false, start;
 	//i = 0;
-	for !found /*&& i < maxSteps*/ {
+	for !found /*&& i < maxSteps {
 		var output []string
 		if err := call(nextNode, "Node.Find", id, &output); err != nil {
 			log.Printf("Error finding node")
@@ -70,8 +73,8 @@ func find(id, start string) string {
 		return nextNode
 	} else {
 
-	}*/
-}
+	}
+}*/
 
 func (n *Node) Ping(p string, reply *string) error {
 	fmt.Printf("%s\n", p)
@@ -143,7 +146,7 @@ func (n *Node) Join(np string, reply *string) error {
 	return nil
 	//n.Predecessor = nil
 	//n.Successor = np.find(successor(n)
-}*/
+}
 
 func (n *Node) Find(id string, reply *[]string) error {
 	b, s := n.find_successor(id)
@@ -155,22 +158,21 @@ func (n *Node) Find(id string, reply *[]string) error {
 	*reply = []string{ strong, s}
 	return nil
 }
-/*
+
 func (n *Node) NewSucc(np string, reply *string) error {
 	n.Successor[0] = np
 	*reply = "Bitch"
 	return nil
-}*/
-
+}
 func (n *Node) find_successor(id string) (bool, string){
-	idhash := hashstring(id)
+	idhash = hashstring(id)
 	nhash := hashstring(fmt.Sprintf("%s:%s", n.Address, n.Port))
 	shash := hashstring(n.Successor[0])
 	if between(nhash, idhash, shash, true) {
 		return true, n.Successor[0]
 	}
 	return false, n.Successor[0]
-}
+}*/
 
 
 
@@ -224,10 +226,12 @@ func (n *Node) Notify(np string, reply *[]string) error {
 }
 /*
 func (n *Node) fix_fingers() {
-	next += 1
-	if next > m {
-		next = 1
-	finger[next] = find_successor(
+	n.Next += 1
+	if n.Next > 160 {
+		n.Next = 1
+	}
+	fingerHash := jump(fmt.Sprintf("%s:%s", n.Address, n.Port), math.Pow(2, n.Next))
+	_, finger[n.Next] = find_successor(fingerHash)
 }*/
 
 func (n *Node) check_predecessor() {
@@ -257,4 +261,73 @@ func getLocalAddress() string {
 	defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return localAddr.IP.String()
+}
+
+//NEW FIND SHIT JACKASS
+
+func (n *Node) fix_fingers() {
+	n.Next += 1
+	if n.Next > 160 {
+		n.Next = 1
+	}
+	fingerHash := jump(fmt.Sprintf("%s:%s", n.Address, n.Port), int(math.Pow(2, float64(n.Next-1.0))))
+	n.Fingers[n.Next] = find(fingerHash, n.Successor[0])
+}
+
+func (n *Node) find_successor(id *big.Int) (bool, string){
+	nhash := hashstring(fmt.Sprintf("%s:%s", n.Address, n.Port))
+	shash := hashstring(n.Successor[0])
+	if between(nhash, id, shash, true) {
+		return true, n.Successor[0]
+	}
+	nextNode := n.closest_preceding_node(id)
+	return false, nextNode
+}
+
+func (n *Node) closest_preceding_node(id *big.Int) string {
+	for i := 160; i >= 1; i-- {
+		if n.Fingers[i] != "" {
+			fhash := hashstring(n.Fingers[i])
+			nhash := hashstring(fmt.Sprintf("%s:%s", n.Address, n.Port))
+			if between(fhash, nhash, id, true) {
+				return n.Fingers[i]
+			}
+		}
+	}
+	return n.Successor[0]
+}
+
+func (n *Node) Find(id *big.Int, reply *[]string) error {
+	b, s := n.find_successor(id)
+	var strong string
+	if b {
+		strong = "true"
+	}
+
+	*reply = []string{ strong, s}
+	return nil
+}
+
+func find(id *big.Int, start string) string {
+	found, nextNode := false, start;
+	i := 0;
+	for !found && i < 32 {
+		var output []string
+		if err := call(nextNode, "Node.Find", id, &output); err != nil {
+			log.Printf("Error finding node: %v", nextNode)
+			return ""
+		}
+		if len(output[0]) != 0 {
+			found = true
+		}
+		nextNode = output[1]
+		i += 1
+	}
+	//return nextNode
+	if found {
+		return nextNode
+	} else {
+		log.Printf("Can't find node")
+		return ""
+	}
 }

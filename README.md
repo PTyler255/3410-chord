@@ -1,12 +1,17 @@
 # 3410-chord
 
-It is a funcitoning Peer 2 Peer program, just haven't gotten around to fixing up finger tables.
+It is a funcitoning Peer 2 Peer program.
+Finger Tables have been added and are working. 
+Kinda. It broke at one point and then fixed itself 
+when one of the "users" disconnected and then
+reconnected. So I don't know whether or not to
+count that as a win.
 
 ##3410-Chord Part 1 Screencast.mp4
 Is the screencast for part 1 of chord
 
 ##IOU Part 2 Screencast.mp4
-It's 3am for me so please be patient
+PART 2 IS ON IT'S WAY
 
 ##chord.go
 Main file that manages commands for chord program
