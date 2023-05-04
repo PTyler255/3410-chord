@@ -1,17 +1,6 @@
 # 3410-chord
 
-It is a funcitoning Peer 2 Peer program.
-Finger Tables have been added and are working. 
-Kinda. It broke at one point and then fixed itself 
-when one of the "users" disconnected and then
-reconnected. So I don't know whether or not to
-count that as a win.
-
-##3410-Chord Part 1 Screencast.mp4
-Is the screencast for part 1 of chord
-
-##IOU Part 2 Screencast.mp4
-PART 2 IS ON IT'S WAY
+Chord is a peer to peer distributed hash table that is self stabilizing and manages large swaths of key/value stores across multiple devices. Computers dropping in and out of the "ring" automatically updates where the data is stored in order to maintain where everything is located according to the key's hash. A ring can be created by one node and all others can drop in and communicate via RPC calls. Each device has its own command line that can manage the data distributed across the table.
 
 ##chord.go
 Main file that manages commands for chord program
