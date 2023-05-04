@@ -40,7 +40,7 @@ Store a key/value pair on the ring
   
 - putrandom <n>
   
-Not implemented
+*Not implemented*
 
 - get <key>
 
@@ -58,7 +58,7 @@ Dump all data stored on local machine including neighboring nodes and all key/va
 - dumpaddr <address>
 - dumpall
   
-Not implemented
+*Not implemented*
   
 - quit
 
