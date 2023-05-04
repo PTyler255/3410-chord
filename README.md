@@ -61,6 +61,8 @@ Dump all data stored on local machine including neighboring nodes and all key/va
 *Not implemented*
   
 - quit
+  
+Transfer key/values to neighboring nodes and log off
 
 **finger.go**
 
